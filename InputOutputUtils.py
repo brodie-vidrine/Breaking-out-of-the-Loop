@@ -65,7 +65,9 @@ def dlyAsDataFrame( DLY:str) -> pl.DataFrame:
     ).drop( 
         data_cols 
     ).drop( 
-        cs.matches(".*_quality_control.*")
+        cs.matches(".*_quality_control.*"),
+        cs.matches(".*_measure.*"),
+        cs.matches(".*_source.*")
     )
     
     df = df.cast( {"daily_values":pl.List(pl.Float32)}, strict=False )
@@ -75,9 +77,7 @@ def dlyAsDataFrame( DLY:str) -> pl.DataFrame:
         DATE = pl.date( pl.col("Year"), pl.col("Month"), 1)
     ).cast(
         {"Year":pl.String, "Month":pl.String}
-    ).with_columns(
-        YEAR_MONTH = pl.col("Year") + pl.col("Month")
-    ).drop("Year", "Month")
+    )
     
     #Get the total number of days in the month.
     #Hard to believe this isn't a default expression
@@ -102,6 +102,10 @@ def dlyAsDataFrame( DLY:str) -> pl.DataFrame:
     
     df = df.with_columns(
         days_in_month = month_whens
-    ).drop("is_leap_year")
+    ).drop(
+        "is_leap_year"
+    ).select(
+        ["STATION", "DATE", "Element", "daily_values", "qc_flags", "days_in_month"]
+    )
     
     return df
